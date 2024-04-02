@@ -1814,7 +1814,7 @@ func setBreakpoint(t *Term, ctx callContext, tracepoint bool, argstr string) ([]
 
 	switch argLen {
 	case 0:
-		return nil, fmt.Errorf("address required")
+		spec = "+0"
 	case 1:
 		if len(args[0]) != 0 {
 			spec = argstr

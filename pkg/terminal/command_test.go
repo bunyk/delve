@@ -1449,6 +1449,19 @@ func TestCreateBreakpointByLocExpr(t *testing.T) {
 	})
 }
 
+func TestCreateBreakpointOnCurrentLocation(t *testing.T) {
+	withTestTerminal("break", t, func(term *FakeTerminal) {
+		term.MustExec("continue main.main")
+		term.MustExec("break")
+		resp, err := term.Exec("breakpoints")
+		assertNoError(t, err, "listing breakpoints")
+
+		if !strings.Contains(resp, "main.main") {
+			t.Fatal("breakpoint on current location not set")
+		}
+	})
+}
+
 func TestCreateBreakpointWithCondition(t *testing.T) {
 	withTestTerminal("break", t, func(term *FakeTerminal) {
 		term.MustExec("break bp1 main.main:4 if i == 3")
