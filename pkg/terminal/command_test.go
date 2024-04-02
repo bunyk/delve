@@ -227,8 +227,11 @@ func TestExecuteFile(t *testing.T) {
 func TestIssue354(t *testing.T) {
 	printStack(&Term{}, os.Stdout, []api.Stackframe{}, "", false)
 	printStack(&Term{}, os.Stdout, []api.Stackframe{
-		{Location: api.Location{PC: 0, File: "irrelevant.go", Line: 10, Function: nil},
-			Bottom: true}}, "", false)
+		{
+			Location: api.Location{PC: 0, File: "irrelevant.go", Line: 10, Function: nil},
+			Bottom:   true,
+		},
+	}, "", false)
 }
 
 func TestIssue411(t *testing.T) {
@@ -1282,7 +1285,7 @@ func TestBreakpointEditing(t *testing.T) {
 	}
 	_ = term
 
-	var testCases = []struct {
+	testCases := []struct {
 		inBp    *api.Breakpoint
 		inBpStr string
 		edit    string
@@ -1292,57 +1295,68 @@ func TestBreakpointEditing(t *testing.T) {
 			&api.Breakpoint{Tracepoint: true},
 			"trace",
 			"",
-			&api.Breakpoint{}},
+			&api.Breakpoint{},
+		},
 		{ // breakpoint -> tracepoint
 			&api.Breakpoint{Variables: []string{"a"}},
 			"print a",
 			"print a\ntrace",
-			&api.Breakpoint{Tracepoint: true, Variables: []string{"a"}}},
+			&api.Breakpoint{Tracepoint: true, Variables: []string{"a"}},
+		},
 		{ // add print var
 			&api.Breakpoint{Variables: []string{"a"}},
 			"print a",
 			"print b\nprint a\n",
-			&api.Breakpoint{Variables: []string{"b", "a"}}},
+			&api.Breakpoint{Variables: []string{"b", "a"}},
+		},
 		{ // add goroutine flag
 			&api.Breakpoint{},
 			"",
 			"goroutine",
-			&api.Breakpoint{Goroutine: true}},
+			&api.Breakpoint{Goroutine: true},
+		},
 		{ // remove goroutine flag
 			&api.Breakpoint{Goroutine: true},
 			"goroutine",
 			"",
-			&api.Breakpoint{}},
+			&api.Breakpoint{},
+		},
 		{ // add stack directive
 			&api.Breakpoint{},
 			"",
 			"stack 10",
-			&api.Breakpoint{Stacktrace: 10}},
+			&api.Breakpoint{Stacktrace: 10},
+		},
 		{ // remove stack directive
 			&api.Breakpoint{Stacktrace: 20},
 			"stack 20",
 			"print a",
-			&api.Breakpoint{Variables: []string{"a"}}},
+			&api.Breakpoint{Variables: []string{"a"}},
+		},
 		{ // add condition
 			&api.Breakpoint{Variables: []string{"a"}},
 			"print a",
 			"print a\ncond a < b",
-			&api.Breakpoint{Variables: []string{"a"}, Cond: "a < b"}},
+			&api.Breakpoint{Variables: []string{"a"}, Cond: "a < b"},
+		},
 		{ // remove condition
 			&api.Breakpoint{Cond: "a < b"},
 			"cond a < b",
 			"",
-			&api.Breakpoint{}},
+			&api.Breakpoint{},
+		},
 		{ // change condition
 			&api.Breakpoint{Cond: "a < b"},
 			"cond a < b",
 			"cond a < 5",
-			&api.Breakpoint{Cond: "a < 5"}},
+			&api.Breakpoint{Cond: "a < 5"},
+		},
 		{ // change hitcount condition
 			&api.Breakpoint{HitCond: "% 2"},
 			"cond -hitcount % 2",
 			"cond -hitcount = 2",
-			&api.Breakpoint{HitCond: "= 2"}},
+			&api.Breakpoint{HitCond: "= 2"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1387,7 +1401,7 @@ func TestTranscript(t *testing.T) {
 
 		term.MustExec(fmt.Sprintf("transcript %s", name))
 		out = term.MustExec("list")
-		//term.MustExec("transcript -off")
+		// term.MustExec("transcript -off")
 		if out != slurp() {
 			t.Logf("output of list %s", out)
 			t.Logf("contents of transcript: %s", slurp())

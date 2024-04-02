@@ -69,7 +69,8 @@ func Parse(locStr string) (LocationSpec, error) {
 
 	malformed := func(reason string) error {
 		//lint:ignore ST1005 backwards compatibility
-		return fmt.Errorf("Malformed breakpoint location %q at %d: %s", locStr, len(locStr)-len(rest), reason)
+		pos := len(locStr) - len(rest)
+		return fmt.Errorf("Malformed breakpoint location %q at %d: %s", locStr, pos, reason)
 	}
 
 	if len(rest) == 0 {
@@ -271,7 +272,7 @@ func packageMatch(specPkg, symPkg string, packageMap map[string][]string) bool {
 // regex location spec. Only functions matching the regex will be returned.
 func (loc *RegexLocationSpec) Find(t *proc.Target, _ []string, scope *proc.EvalScope, locStr string, includeNonExecutableLines bool, _ [][2]string) ([]api.Location, string, error) {
 	if scope == nil {
-		//TODO(aarzilli): this needs only the list of function we should make it work
+		// TODO(aarzilli): this needs only the list of function we should make it work
 		return nil, "", fmt.Errorf("could not determine location (scope is nil)")
 	}
 	funcs := scope.BinInfo.Functions
@@ -361,7 +362,6 @@ func (ale AmbiguousLocationError) Error() string {
 		for i := range ale.CandidatesLocation {
 			candidates = append(candidates, ale.CandidatesLocation[i].Function.Name())
 		}
-
 	} else {
 		candidates = ale.CandidatesString
 	}
