@@ -1802,11 +1802,19 @@ func formatBreakpointAttrs(prefix string, bp *api.Breakpoint, includeTrace bool)
 }
 
 func setBreakpoint(t *Term, ctx callContext, tracepoint bool, argstr string) ([]*api.Breakpoint, error) {
-	args := config.Split2PartsBySpace(argstr)
+	var (
+		cond string
+		spec string
 
-	requestedBp := &api.Breakpoint{}
-	spec := ""
-	switch len(args) {
+		requestedBp = &api.Breakpoint{}
+
+		args   = config.SplitQuotedFields(argstr, '"')
+		argLen = len(args)
+	)
+
+	switch argLen {
+	case 0:
+		return nil, fmt.Errorf("address required")
 	case 1:
 		if len(args[0]) != 0 {
 			spec = argstr
@@ -1822,7 +1830,14 @@ func setBreakpoint(t *Term, ctx callContext, tracepoint bool, argstr string) ([]
 			spec = argstr
 		}
 	default:
-		return nil, fmt.Errorf("address required")
+		if api.ValidBreakpointName(args[0]) == nil {
+			requestedBp.Name = args[0]
+			spec = args[1]
+			cond = strings.Join(args[3:], " ") // args[2] == "if"
+		} else {
+			spec = args[0]
+			cond = strings.Join(args[2:], " ") // args[1] == "if"
+		}
 	}
 
 	requestedBp.Tracepoint = tracepoint
@@ -1875,6 +1890,7 @@ func setBreakpoint(t *Term, ctx callContext, tracepoint bool, argstr string) ([]
 			requestedBp.LoadArgs = &ShortLoadConfig
 		}
 
+		requestedBp.Cond = cond
 		bp, err := t.client.CreateBreakpointWithExpr(requestedBp, spec, t.substitutePathRules(), false)
 		if err != nil {
 			return nil, err
@@ -2429,7 +2445,6 @@ func parseStackArgs(argstr string) (stackArgs, error) {
 					return 0, fmt.Errorf("expected number after %s: %v", name, err)
 				}
 				return n, nil
-
 			}
 			switch args[i] {
 			case "-full":
